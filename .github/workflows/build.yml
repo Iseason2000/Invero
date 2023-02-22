@@ -40,3 +40,8 @@ jobs:
         id: build_4
         if: steps.build_3.outcome == 'failure'
         run: ./gradlew build
+      - name: capture build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: Artifacts
+          path: plugin/build
