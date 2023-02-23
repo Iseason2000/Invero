@@ -1,0 +1,17 @@
+
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: '* */24 * * *'
+  workflow_dispatch:
+  
+jobs:
+  repo-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: tgymnich/fork-sync@v1.8
+        with:
+          owner: Arasple
+          base: master
+          head: master
