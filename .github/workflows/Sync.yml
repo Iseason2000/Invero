@@ -3,7 +3,7 @@ name: Sync Fork
 
 on:
   schedule:
-    - cron: '* */24 * * *'
+    - cron: '0 0 */3 * *'
   workflow_dispatch:
   
 jobs:
@@ -14,6 +14,7 @@ jobs:
         with:
           token: ${{ secrets.PERSONAL_TOKEN }}
           auto_approve: true
+          ignore_fail: true
           owner: Arasple
           base: master
           head: master
