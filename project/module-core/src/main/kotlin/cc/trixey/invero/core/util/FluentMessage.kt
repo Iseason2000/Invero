@@ -2,6 +2,9 @@ package cc.trixey.invero.core.util
 
 import cc.trixey.invero.common.adventure.parseMiniMessage
 import org.bukkit.entity.Player
+import taboolib.common.platform.function.adaptPlayer
+import taboolib.module.chat.ComponentText
+import taboolib.module.chat.colored
 import taboolib.module.chat.component
 import taboolib.platform.compat.replacePlaceholder
 
@@ -14,29 +17,41 @@ import taboolib.platform.compat.replacePlaceholder
  */
 fun String.fluentMessage(): String {
     if (isBlank()) return this
-
     return component().build {
-        // kether parser
         transform { KetherHandler.parseInline(it, null, emptyMap()) }
-        // placeholder API - not supported
-        // miniMessage
-        transform { parseMiniMessage() }
-        // taboolib color
+        transform { it.parseMiniMessage() }
         colored()
     }.toLegacyText()
 }
 
 fun String.fluentMessage(player: Player, variables: Map<String, Any> = emptyMap()): String {
-    if (isBlank()) return this
+    return KetherHandler
+        .parseInline(this, player, variables)
+        .replacePlaceholder(player)
+        .parseMiniMessage()
+        .colored()
+//    return fluentMessageComponent(player, variables).toLegacyText()
+}
 
-    return component().build {
+fun String.fluentMessageComponent(
+    player: Player,
+    variables: Map<String, Any> = emptyMap(),
+    send: Boolean = false
+): ComponentText {
+    val component = component()
+    if (isBlank()) return component.build()
+
+    return component.build {
+        startsWith("&")
         // kether parser
         transform { KetherHandler.parseInline(it, player, variables) }
         // placeholder API
-        transform { replacePlaceholder(player) }
+        transform { it.replacePlaceholder(player) }
         // miniMessage
-        transform { parseMiniMessage() }
+        transform { it.parseMiniMessage() }
         // taboolib color
         colored()
-    }.toLegacyText()
+    }.also {
+        if (send) it.sendTo(adaptPlayer(player))
+    }
 }

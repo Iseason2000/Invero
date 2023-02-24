@@ -1,8 +1,6 @@
 package cc.trixey.invero.plugin
 
-import cc.trixey.invero.common.adventure.parseMiniMessage
-import cc.trixey.invero.common.adventure.translateAmpersandColor
-import cc.trixey.invero.core.util.KetherHandler
+import cc.trixey.invero.core.util.fluentMessage
 import taboolib.common.platform.Plugin
 import taboolib.common.platform.function.info
 import taboolib.library.xseries.XMaterial
@@ -23,16 +21,10 @@ object InveroPlugin : Plugin() {
 
     override fun onLoad() {
         info("Loaded")
-
         repeat(1000) { hot() }
     }
 
     fun hot() {
-        fun String.translate() = KetherHandler
-            .parseInline(this, null, emptyMap())
-            .parseMiniMessage()
-            .translateAmpersandColor()
-
         val item = buildItem(XMaterial.PLAYER_HEAD) {
             repeat(10) { lore += "<red><gradient>{{text}}" }
         }
@@ -41,7 +33,7 @@ object InveroPlugin : Plugin() {
         tag.putAll(item.getItemTag())
         tag.saveTo(item)
 
-        item.modifyLore { replaceAll { it.translate() } }
+        item.modifyLore { replaceAll { it.fluentMessage() } }
     }
 
 }
