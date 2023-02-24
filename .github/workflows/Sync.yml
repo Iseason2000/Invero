@@ -12,6 +12,8 @@ jobs:
     steps:
       - uses: tgymnich/fork-sync@v1.8
         with:
+          token: ${{ secrets.PERSONAL_TOKEN }}
+          auto_approve: true
           owner: Arasple
           base: master
           head: master
