@@ -2,7 +2,7 @@
 
 package cc.trixey.invero.core.panel
 
-import cc.trixey.invero.common.supplier.Object
+import cc.trixey.invero.common.Object
 import cc.trixey.invero.core.*
 import cc.trixey.invero.core.icon.Icon
 import cc.trixey.invero.core.serialize.MappedIconSerializer
@@ -51,10 +51,10 @@ class PanelGenerator(
     }
 
     @Transient
-    override val scale = _scale ?: layout?.getScale() ?: Scale(9 to 1)
+    override val scale = _scale ?: layout?.getScale() ?: Scale(9 to -1)
 
     override fun invoke(parent: PanelContainer, session: Session) =
-        parent.generatorPaged(scale.raw, parent.locate()) {
+        parent.generatorPaged(scale.pair, parent.locate()) {
             skipRender = true
 
             // 生成默认图标

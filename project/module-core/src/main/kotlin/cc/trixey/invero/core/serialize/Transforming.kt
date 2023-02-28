@@ -3,7 +3,7 @@ package cc.trixey.invero.core.serialize
 import cc.trixey.invero.core.BaseMenu
 import cc.trixey.invero.core.icon.Icon
 import cc.trixey.invero.core.icon.IconHandler
-import cc.trixey.invero.core.menu.CommandArgument
+import cc.trixey.invero.core.item.Frame
 import cc.trixey.invero.core.menu.NodeRunnable
 import cc.trixey.invero.ui.common.event.ClickType
 import kotlinx.serialization.json.*
@@ -80,36 +80,36 @@ object BaseMenuSerializer : JsonTransformingSerializer<BaseMenu>(serializer()) {
 
 }
 
+internal object FrameSerializer : JsonTransformingSerializer<Frame>(serializer()) {
+
+    override fun transformDeserialize(element: JsonElement): JsonElement {
+        val struc = element.jsonObject.toMutableMap()
+
+        if ("texture" !in struc.keys) {
+            val texture = buildJsonObject {
+                textureKeysHead.forEach { key ->
+                    struc[key]?.let {
+                        put("head", it)
+                        return@buildJsonObject
+                    }
+                }
+                textureSourcedKeys.forEach { key ->
+                    struc[key]?.let {
+                        put("source", key)
+                        put("value", it)
+                        return@buildJsonObject
+                    }
+                }
+            }
+            struc["texture"] = texture
+        }
+
+        return JsonObject(struc)
+    }
+
+}
+
 internal object IconSerializer : JsonTransformingSerializer<Icon>(serializer()) {
-
-    private val displayKeys = arrayOf(
-        "material", "texture", "mat",
-        "name",
-        "lore", "lores",
-        "amount", "count", "amt",
-        "damage", "durability", "dur",
-        "customModelData", "model",
-        "color",
-        "glow", "shiny",
-        "enchantments", "enchantment", "enchant",
-        "flags", "flag",
-        "unbreakable",
-        "nbt",
-        "enhancedLore",
-    )
-
-    private val textureKeysHead = arrayOf(
-        "head", "skull"
-    )
-
-    private val textureSourcedKeys = arrayOf(
-        "zaphkiel", "zap",
-        "oraxen",
-        "itemsadder", "ia",
-        "headdatabase", "hdb",
-        "base64", "json", "serialized",
-        "kether"
-    )
 
     override fun transformDeserialize(element: JsonElement): JsonElement {
         val struc = element.jsonObject.toMutableMap()
@@ -134,7 +134,6 @@ internal object IconSerializer : JsonTransformingSerializer<Icon>(serializer()) 
                 }
                 textureSpecified = head || source
             }
-
             struc["display"] = buildJsonObject {
                 displayKeys.forEach { key -> struc[key]?.let { value -> put(key, value) } }
                 if (textureSpecified) put("texture", texture)
@@ -150,21 +149,6 @@ internal object IconSerializer : JsonTransformingSerializer<Icon>(serializer()) 
         }
         struc.remove("display")
         return JsonObject(struc)
-    }
-
-}
-
-internal object CommandArgumentSerailizer : JsonTransformingSerializer<CommandArgument>(serializer()) {
-
-    override fun transformDeserialize(element: JsonElement): JsonElement {
-        return if (element is JsonPrimitive) {
-            buildJsonObject {
-                put("id", element.content)
-                put("type", "ANY")
-            }
-        } else {
-            element
-        }
     }
 
 }
