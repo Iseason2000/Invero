@@ -1,7 +1,9 @@
 package cc.trixey.invero.ui.bukkit
 
+import cc.trixey.invero.ui.bukkit.util.isUIMarked
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import taboolib.platform.util.isNotAir
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -18,19 +20,39 @@ fun Player.isCurrentlyStored(): Boolean {
     return storageMap.containsKey(this.uniqueId)
 }
 
-fun Player.storePlayerInventory(wipe: Boolean = false) {
-    storageMap[uniqueId] = Storage(this)
+fun Player.storePlayerInventory(hidePlayerInventory: Boolean) {
+    if (storageMap.containsKey(uniqueId)) error("Player $name is already stored!")
+
+    storageMap[uniqueId] = Storage(hidePlayerInventory, this)
 }
 
-fun Player.restorePlayerInventory() {
-    storageMap[uniqueId]?.let {
-        inventory.storageContents = it.storage
+fun Player.restorePlayerInventory() = storageMap[uniqueId]?.let { backup ->
+
+    if (!backup.isPlayerInventoryHided) {
+        for (i in 0..35) {
+            val currentSlot = inventory.storageContents.getOrNull(i)
+            val previousSlot = backup.storage.getOrNull(i)
+
+            // 当前背包槽位不为 UI 图标 时
+            if (currentSlot?.isUIMarked() != true) {
+                if (currentSlot.isNotAir()) {
+                    backup.storage[i] = currentSlot
+                } else if (previousSlot.isNotAir()) {
+                    backup.storage[i] = null
+                }
+            }
+        }
     }
+
+    inventory.storageContents = backup.storage
     storageMap.remove(uniqueId)
 }
 
-class Storage(var storage: Array<ItemStack?> = arrayOfNulls(36)) {
+class Storage(val isPlayerInventoryHided: Boolean, var storage: Array<ItemStack?> = arrayOfNulls(36)) {
 
-    constructor(player: Player) : this(player.inventory.storageContents.clone())
+    constructor(hidePlayerInventory: Boolean, player: Player) : this(
+        hidePlayerInventory,
+        player.inventory.storageContents.clone()
+    )
 
 }

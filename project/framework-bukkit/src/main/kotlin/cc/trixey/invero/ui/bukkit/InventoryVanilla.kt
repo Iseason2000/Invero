@@ -7,12 +7,10 @@ import cc.trixey.invero.ui.bukkit.util.synced
 import cc.trixey.invero.ui.common.panel.IOPanel
 import cc.trixey.invero.ui.common.util.anyInstancePanel
 import org.bukkit.Bukkit
-import org.bukkit.entity.Player
 import org.bukkit.event.inventory.*
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
-import taboolib.common.platform.function.submit
 
 /**
  * Invero
@@ -30,6 +28,9 @@ class InventoryVanilla(override val window: BukkitWindow) : ProxyBukkitInventory
     } catch (e: Throwable) {
         error("Not supported inventory type (${containerType.bukkitType}) yet")
     }
+
+    override val hidePlayerInventory: Boolean
+        get() = window.hidePlayerInventory
 
     override fun isVirtual(): Boolean {
         return false
@@ -90,11 +91,6 @@ class InventoryVanilla(override val window: BukkitWindow) : ProxyBukkitInventory
         viewer.openInventory(container)
     }
 
-    override fun close(doCloseInventory: Boolean, updateInventory: Boolean) {
-        if (doCloseInventory && isViewing()) viewer.closeInventory()
-        if (updateInventory) viewer.updateInventory()
-    }
-
     fun handleClick(e: InventoryClickEvent) {
         // 默认取消事件
         e.isCancelled = true
@@ -103,7 +99,8 @@ class InventoryVanilla(override val window: BukkitWindow) : ProxyBukkitInventory
         val slot = e.rawSlot
         // 如果点击玩家背包容器
         if (slot > window.type.slotsContainer.last) {
-            if (!window.storageMode.overridePlayerInventory) {
+            if (!hidePlayerInventory && window.anyIOPanel) {
+
                 e.isCancelled = false
                 return
             }
@@ -152,7 +149,7 @@ class InventoryVanilla(override val window: BukkitWindow) : ProxyBukkitInventory
         val slot = e.rawSlot
         // playerInventory -> IO Panel
         if (slot > window.type.slotsContainer.last) {
-            if (window.storageMode.overridePlayerInventory) return handleClick(e)
+            if (hidePlayerInventory || !window.anyIOPanel) return handleClick(e)
             val insertItem = e.currentItem?.clone() ?: return handleClick(e)
             window
                 .getPanelsRecursively()
@@ -179,7 +176,7 @@ class InventoryVanilla(override val window: BukkitWindow) : ProxyBukkitInventory
             e.currentItem?.amount = insertItem.amount
         }
         // IO Panel -> playerInventory
-        else if (!window.storageMode.overridePlayerInventory) {
+        else if (!hidePlayerInventory && window.anyIOPanel) {
             val clickedSlot = window.scale.convertToPosition(slot)
 
             window
@@ -188,10 +185,7 @@ class InventoryVanilla(override val window: BukkitWindow) : ProxyBukkitInventory
                 .sortedByDescending { it.weight }
                 .find { it is CraftingPanel && window.scale.convertToPosition(e.rawSlot) in it.area }
                 ?.handleItemsMove(clickedSlot, e)
-                .let {
-                    println("6 $it")
-                    if (it == null) return handleClick(e)
-                }
+                .let { if (it == null) return handleClick(e) }
         } else {
             return handleClick(e)
         }
@@ -205,17 +199,16 @@ class InventoryVanilla(override val window: BukkitWindow) : ProxyBukkitInventory
         return handleClick(e)
     }
 
-    fun handleOpen(e: InventoryOpenEvent) {}
+    fun handleOpenEvent(e: InventoryOpenEvent) {
 
-    fun handleClose(e: InventoryCloseEvent) {
-        // 传递 Bukkit 关闭事件
+    }
+
+    fun handleCloseEvent(e: InventoryCloseEvent) {
         if (window.isRegistered()) {
             window.close(doCloseInventory = false, updateInventory = false)
-            if (!window.anyInstancePanel<IOPanel>()) submit(delay = 2L) {
-                (e.player as Player).restorePlayerInventory()
-            }
         }
     }
+
 
     class Holder(val window: BukkitWindow) : InventoryHolder {
 

@@ -1,12 +1,10 @@
-package cc.trixey.invero.core.script.kether
+package cc.trixey.invero.core.script
 
 import cc.trixey.invero.core.Context
 import cc.trixey.invero.core.compat.bungeecord.Bungees
 import cc.trixey.invero.core.compat.eco.HookPlayerPoints
-import cc.trixey.invero.core.script.contextVar
-import cc.trixey.invero.core.script.player
-import cc.trixey.invero.core.script.session
-import cc.trixey.invero.core.util.fluentMessageComponent
+import cc.trixey.invero.core.script.loader.InveroKetherParser
+import cc.trixey.invero.core.util.translateFormattedMessage
 import org.bukkit.entity.Player
 import taboolib.module.kether.*
 import taboolib.platform.compat.depositBalance
@@ -22,22 +20,7 @@ import java.util.concurrent.CompletableFuture
  * @author Arasple
  * @since 2023/1/24 22:51
  */
-
-@KetherParser(["message", "msg"], namespace = "invero", shared = true)
-internal fun actionMessage() = combinationParser {
-    it.group(
-        text(),
-    ).apply(it) { message ->
-        now {
-            val context = contextVar<Context?>("@context")?.variables ?: variables().toMap()
-            val player = player()
-
-            message.fluentMessageComponent(player, context, send = true)
-        }
-    }
-}
-
-@KetherParser(["parse"], namespace = "invero", shared = true)
+@InveroKetherParser(["parse"])
 internal fun actionParser() = scriptParser {
     val str = it.nextParsedAction()
     actionTake {
@@ -45,7 +28,7 @@ internal fun actionParser() = scriptParser {
             val context = contextVar<Context?>("@context")?.variables ?: variables().toMap()
             val player = player()
 
-            s.fluentMessageComponent(player, context).toLegacyText()
+            s.translateFormattedMessage(player, context)
         }
     }
 }
@@ -53,7 +36,7 @@ internal fun actionParser() = scriptParser {
 /*
 connect <serverName> for <playerName>
  */
-@KetherParser(["connect", "bungee"], namespace = "invero", shared = true)
+@InveroKetherParser(["connect", "bungee"])
 internal fun actionConnect() = combinationParser {
     it.group(
         text(),
@@ -82,7 +65,7 @@ internal fun actionConnect() = combinationParser {
  * eco give 200
  * eco set 200
  */
-@KetherParser(["eco", "money", "vault"], namespace = "invero", shared = true)
+@InveroKetherParser(["eco", "money", "vault"])
 internal fun actionEco() = scriptParser {
     if (!it.hasNext()) actionNow { player().getBalance() }
     else {
@@ -100,7 +83,7 @@ internal fun actionEco() = scriptParser {
     }
 }
 
-@KetherParser(["playerpoints", "points"], namespace = "invero", shared = true)
+@InveroKetherParser(["playerpoints", "points"])
 internal fun actionPoints() = scriptParser {
     if (!it.hasNext()) actionNow { HookPlayerPoints.look(player()) }
     else {

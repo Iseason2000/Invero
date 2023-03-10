@@ -9,15 +9,17 @@ package cc.trixey.invero.ui.common
  */
 interface Window : Gridable {
 
-    val viewer: Viewer
+    val type: ContainerType
 
     var title: String
 
-    val type: cc.trixey.invero.ui.common.ContainerType
-
-    val storageMode: StorageMode
+    val viewer: Viewer
 
     val inventory: ProxyInventory
+
+    val overridePlayerInventory: Boolean
+
+    val hidePlayerInventory: Boolean
 
     fun open()
 
